@@ -1,0 +1,9 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ScanProcess.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="VirusTotalKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)">1cc302b2a9d28a98df644cb215330e13003ea1d3bcf4bc7eaf453484d8e337a8</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
