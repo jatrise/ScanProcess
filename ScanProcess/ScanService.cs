@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Driver;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
@@ -15,6 +16,7 @@ using System.Timers;
 using VirusTotalNET;
 using VirusTotalNET.ResponseCodes;
 using VirusTotalNET.Results;
+using ScanProcess.Models;
 
 namespace ScanProcess
 {
@@ -51,30 +53,6 @@ namespace ScanProcess
 
             //InstantiateBackgroundThread();
         }
-
-        private void WorkerThread_DoWork(object sender, DoWorkEventArgs e)
-        {
-            DateTime startTime = DateTime.Now;
-
-            _keepRunning = true;
-
-            while (_keepRunning)
-            {
-                Thread.Sleep(1000);
-
-                string timeElapsedInstring = (DateTime.Now - startTime).ToString(@"hh\:mm\:ss");
-
-                workerThread.ReportProgress(0, timeElapsedInstring);
-
-                if (workerThread.CancellationPending)
-                {
-                    // this is important as it set the cancelled property of RunWorkerCompletedEventArgs to true
-                    e.Cancel = true;
-                    break;
-                }
-            }
-        }
-
 
         protected override void OnStop()
         {
@@ -159,6 +137,7 @@ namespace ScanProcess
                     {
                         case 0:
                             MoveFile(fileName);
+                            SaveFileInDb(fileName, fileByteArray, "1","223");
                             break;
                         default:
                             //eventLog1.WriteEntry("File was detected with a virus" + fileName);
@@ -186,8 +165,6 @@ namespace ScanProcess
 
         private void MoveFile(string fileName)
         {
-            ;
-
             try
             {
                 if (!Directory.Exists(destinationFolder))
@@ -218,6 +195,40 @@ namespace ScanProcess
         {
             //Write code here to do some job depends on your requirement
             StartProcess();
+        }
+
+        private void SaveFileInDb(string fileName, byte[] fileData, string donorId, string donationId)
+        {
+            var connectionString = "mongodb://localhost:27017";
+            var client = new MongoClient(connectionString);
+            IMongoDatabase db = client.GetDatabase("Habitat");
+
+            var donorFile= new DonorFiles {
+                FileName = GetFileName(fileName),
+                DonorId = donorId,
+                DonationId = donationId,
+                FileData = fileData,
+                CreatedBy = donorId,
+                CreatedDate = DateTime.Now
+            };
+
+            var collection = db.GetCollection<DonorFiles>("Donor");
+            collection.InsertOne(donorFile);
+            //For multiple insertions collection.InsertMany or InsertManyAsync
+        }
+
+        private async Task ReadFilesFromDb()
+        {
+            var connectionString = "mongodb://localhost:27017";
+            var client = new MongoClient(connectionString);
+            using (var cursor = await client.ListDatabasesAsync())
+            {
+                var databaseDocuments = cursor.ToList();
+                foreach (var db in databaseDocuments)
+                {
+                    Console.WriteLine(db["Habitat"].ToString());
+                }
+            }
         }
     }
 }
